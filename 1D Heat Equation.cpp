@@ -6,7 +6,7 @@
 #include <cmath>
 #include <vector>
 #include <matplot/matplot.h>
-#include "SOR.h"
+//include "SOR.h"
 
 using namespace std;
 
@@ -21,11 +21,7 @@ std::vector<double> FDMHeatConduction_OneDimension(int nodes, double LeftWallBou
     
     NodesTemps[nodes-1] = RightWallBoundary;
 
-    if (insulated)
-    {
-       p = 2;
-       NodesTemps[nodes - 2] = RightWallBoundary;
-    }
+
 
     for (int j = 0; j < iterations; j++)
     {
@@ -61,25 +57,19 @@ std::vector<double> SORSolver(std::vector<std::vector<double>> a, std::vector<do
     u[p - 1] = b[p - 1];
     uOld[p - 1] = b[p - 1];
     
-    // Insulated Boundary Conditions no  gradient between the n-1 and n node
-    if (Insulated)
-    {
-        Fromlast = 2;        
-        u[p - Fromlast] = b[p - 1];
-        uOld[p - Fromlast] = u[p - Fromlast];
-    }
 
 
     //Loop through  iterations or exit if solution is converged
     for (int j = 0; j < iteration; j++)
     {
-        if (Insulated)
-        {
-            u[p - 1] = u[p - Fromlast];
-            uOld[p - 1] = uOld[p - Fromlast];
-        }
-        for (int i = 1; i < p - Fromlast; i++)
+        
+        for (int i = 1; i < p - 1; i++)
         {            
+            if (Insulated && i ==p - 2)
+            {
+                u[p - 1] = u[p - 2];
+                uOld[p - 1] = uOld[p - 2];
+            }
             u[i] = Omega * (guess +(1/a[i][i]) * (u[i-1] +  uOld[i+1])) + (1 - Omega) * uOld[i]; 
             delta = abs(u[i]- uOld[i]) * 100. / u[i];
             uOld[i] = u[i];
@@ -138,7 +128,7 @@ int main() {
 
     /// Below part is for SOR method
     int gridPoints = 10;
-    double boundaryLeft = 20;
+    double boundaryLeft =20;
     double boundaryRight =60;
     
     //diagonal matrix derived from Taylor expansion
@@ -149,7 +139,7 @@ int main() {
     b[0] = boundaryLeft;
     b[gridPoints - 1] =  boundaryRight;
   
-    std::vector<double> NodeTemps2 = SORSolver(a,b,0.00001,0,1.2, 100, false);
+    std::vector<double> NodeTemps2 = SORSolver(a,b,0.000001,0,1.2, 100, false);
     std::vector<std::vector<double>> D = {
        NodeTemps2, NodeTemps2 };
     imagesc(D);
